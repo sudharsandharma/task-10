@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Zepto UX Fixes Demo</title>
+<style>
+  body {font-family:system-ui,Arial;margin:0;padding:0;background:#f9f9f9;line-height:1.5;}
+  header {background:#333;color:white;padding:12px;text-align:center;position:sticky;top:0;z-index:100;}
+  nav a {color:white;margin:0 12px;text-decoration:none;font-weight:bold;}
+
+  section {padding:40px 20px;min-height:100vh;}
+  h2 {margin-bottom:20px;}
+
+  .product{display:flex;gap:12px;align-items:center;padding:12px;background:#fff;border-radius:8px;margin-bottom:10px}
+  .product img{width:64px;height:64px;object-fit:cover;border-radius:6px}
+  .fab{position:fixed;right:18px;bottom:18px;background:#ff6b00;color:#fff;border-radius:999px;padding:14px 18px;font-weight:700;box-shadow:0 6px 18px rgba(0,0,0,.15);cursor:pointer}
+  .badge{background:#fff;color:#ff6b00;border-radius:999px;padding:2px 8px;margin-left:8px;font-weight:700}
+  .mini-cart{position:fixed;right:0;top:0;height:100%;width:320px;background:#fff;box-shadow:-8px 0 24px rgba(0,0,0,.12);transform:translateX(100%);transition:transform .28s ease;display:flex;flex-direction:column;z-index:200}
+  .mini-cart.open{transform:translateX(0)}
+  .mini-cart .head{padding:16px;border-bottom:1px solid #eee;font-weight:700}
+  .mini-cart .items{padding:12px;flex:1;overflow:auto}
+  .qty{display:inline-flex;gap:6px;align-items:center}
+  .qty button{padding:6px 8px;border:1px solid #ddd;background:#fff;border-radius:6px;cursor:pointer}
+  .checkout{padding:16px;border-top:1px solid #eee}
+  .muted{color:#666;font-size:14px}
+
+  .topbar{background:white;padding:12px;display:flex;gap:12px;align-items:center;position:sticky;top:40px;box-shadow:0 1px 0 rgba(0,0,0,.06)}
+  input.search{flex:1;padding:10px;border:1px solid #ddd;border-radius:8px}
+  .filters-btn{background:#fff;border:1px solid #ddd;padding:8px 12px;border-radius:8px;cursor:pointer}
+  .products{padding:12px;display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
+  .card{background:#fff;padding:8px;border-radius:8px;text-align:left}
+  .filter-panel{position:fixed;left:0;top:0;height:100%;width:260px;background:#fff;box-shadow:6px 0 24px rgba(0,0,0,.12);transform:translateX(-110%);transition:transform .22s;z-index:300}
+  .filter-panel.open{transform:translateX(0)}
+  .filter-panel h3{padding:12px;border-bottom:1px solid #eee}
+  .filter-body{padding:12px}
+  .chip{display:inline-block;padding:6px 8px;border:1px solid #ddd;border-radius:14px;margin:6px;cursor:pointer}
+  .apply{position:absolute;bottom:16px;left:16px;right:16px}
+
+  .checkout-box{background:#fff;padding:16px;border-radius:8px;max-width:520px;margin:0 auto}
+  .prog{height:8px;background:#eee;border-radius:4px;overflow:hidden;margin-bottom:12px}
+  .prog > i{display:block;height:100%;width:33%;background:#2b9bf3}
+  .row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed #eee}
+  .actions{display:flex;gap:8px;margin-top:12px}
+  button{padding:10px;border-radius:6px;border:none;cursor:pointer}
+  .primary{background:#2b9bf3;color:white}
+  .ghost{background:#fff;border:1px solid #ddd}
+</style>
+</head>
+<body>
+
+<header>
+  <nav>
+    <a href="#fix1">Cart</a>
+    <a href="#fix2">Search/Filters</a>
+    <a href="#fix3">Checkout</a>
+  </nav>
+</header>
+
+<section id="fix1">
+  <h2>Fix 1: Persistent Cart + Mini Cart</h2>
+  <div class="product">
+    <img src="https://picsum.photos/seed/a/200/200">
+    <div><strong>Milk 1L</strong><div class="muted">₹60</div></div>
+    <div style="margin-left:auto"><button onclick="add('Milk 1L',60)">Add</button></div>
+  </div>
+  <div class="product">
+    <img src="https://picsum.photos/seed/b/200/200">
+    <div><strong>Eggs 12</strong><div class="muted">₹80</div></div>
+    <div style="margin-left:auto"><button onclick="add('Eggs 12',80)">Add</button></div>
+  </div>
+  <div class="fab" id="fab" onclick="toggleCart()">Cart <span class="badge" id="count">0</span></div>
+  <div class="mini-cart" id="mini">
+    <div class="head">Your Cart</div>
+    <div class="items" id="items"><div class="muted">Cart is empty</div></div>
+    <div class="checkout">
+      <div style="display:flex;justify-content:space-between"><div class="muted">Subtotal</div><div id="subtotal">₹0</div></div>
+      <div style="margin-top:12px"><button style="width:100%;padding:12px;background:#ff6b00;color:white;border:none;border-radius:8px" onclick="gotoCheckout()">Go to checkout</button></div>
+    </div>
+  </div>
+</section>
+
+<section id="fix2">
+  <h2>Fix 2: Search + Filter Panel</h2>
+  <div class="topbar">
+    <input class="search" placeholder="Search items..." id="q">
+    <button class="filters-btn" onclick="openFilters()">Filters</button>
+  </div>
+  <div class="products">
+    <div class="card"><strong>Milk 1L</strong><div class="muted">₹60</div></div>
+    <div class="card"><strong>Eggs 12</strong><div class="muted">₹80</div></div>
+    <div class="card"><strong>Bread</strong><div class="muted">₹30</div></div>
+    <div class="card"><strong>Butter</strong><div class="muted">₹120</div></div>
+    <div class="card"><strong>Coffee</strong><div class="muted">₹299</div></div>
+  </div>
+  <div class="filter-panel" id="filter">
+    <h3>Filters</h3>
+    <div class="filter-body">
+      <div><strong>Price</strong></div>
+      <div><label><input type="radio" name="price"> Low to High</label></div>
+      <div><label><input type="radio" name="price"> High to Low</label></div>
+      <div style="margin-top:12px"><strong>Category</strong></div>
+      <span class="chip" onclick="toggleChip(this)">Dairy</span>
+      <span class="chip" onclick="toggleChip(this)">Bakery</span>
+      <span class="chip" onclick="toggleChip(this)">Beverages</span>
+    </div>
+    <div class="apply"><button style="width:100%;padding:12px;background:#ff6b00;color:white;border:none;border-radius:8px" onclick="applyFilters()">Apply</button></div>
+  </div>
+</section>
+
+<section id="fix3">
+  <h2>Fix 3: Simplified Checkout Flow</h2>
+  <div class="checkout-box">
+    <div class="prog"><i id="bar"></i></div>
+    <div id="step1">
+      <h3>1. Delivery</h3>
+      <div class="row"><div>Address</div><div>Home</div></div>
+      <div class="actions"><button class="ghost" onclick="prev()">Edit cart</button><button class="primary" onclick="next()">Continue</button></div>
+    </div>
+    <div id="step2" style="display:none">
+      <h3>2. Payment</h3>
+      <div class="row"><div>Payment method</div><div>UPI</div></div>
+      <div class="actions"><button class="ghost" onclick="prev()">Back</button><button class="primary" onclick="next()">Pay</button></div>
+    </div>
+    <div id="step3" style="display:none">
+      <h3>3. Review</h3>
+      <div class="row"><div>Subtotal</div><div>₹200</div></div>
+      <div class="row"><div>Delivery</div><div>₹30</div></div>
+      <div class="row"><strong>Total</strong><strong>₹230</strong></div>
+      <div class="actions"><button class="ghost" onclick="prev()">Back</button><button class="primary" onclick="confirmOrder()">Place order</button></div>
+    </div>
+  </div>
+</section>
+
+<script>
+
+let cart = {}; 
+function add(name,price){ if(!cart[name]) cart[name]={price,qty:0}; cart[name].qty++; renderCart(); }
+function renderCart(){
+  const itemsEl=document.getElementById('items');itemsEl.innerHTML='';const names=Object.keys(cart);let subtotal=0;
+  if(names.length===0){itemsEl.innerHTML='<div class="muted">Cart is empty</div>';}
+  else{names.forEach(n=>{let it=cart[n];subtotal+=it.price*it.qty;let row=document.createElement('div');row.innerHTML=`${n} x${it.qty}`;itemsEl.appendChild(row);});}
+  document.getElementById('subtotal').innerText='₹'+subtotal;
+  document.getElementById('count').innerText=names.reduce((s,n)=>s+cart[n].qty,0);
+}
+function toggleCart(){document.getElementById('mini').classList.toggle('open');}
+function gotoCheckout(){location.hash='#fix3';}
+
+function openFilters(){document.getElementById('filter').classList.toggle('open');}
+function toggleChip(el){el.style.background=el.style.background?'':'#ffefdf';}
+function applyFilters(){openFilters();alert('Filters applied (demo)');}
+document.getElementById('q').addEventListener('input',(e)=>{const q=e.target.value.toLowerCase();document.querySelectorAll('.products .card').forEach(c=>{c.style.display=c.innerText.toLowerCase().includes(q)?'':'none';});});
+
+let step=1;
+function show(){document.getElementById('step1').style.display=step===1?'block':'none';document.getElementById('step2').style.display=step===2?'block':'none';document.getElementById('step3').style.display=step===3?'block':'none';document.getElementById('bar').style.width=(step/3*100)+'%';}
+function next(){if(step<3){step++;show();}}
+function prev(){if(step>1){step--;show();}}
+function confirmOrder(){alert('Order placed (demo)');}
+show();
+</script>
+</body>
+</html>
+
